@@ -1,0 +1,13 @@
+[33mcommit 81f0d98021ab2cc5ea77f1ddf6e5e8f015bf4876[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m)[m
+Author: Akil Hassane <akilhassane7@gmail.com>
+Date:   Sun Sep 14 15:04:44 2025 +0200
+
+    Fix yarn.lock Docker build issue
+    
+    - Remove yarn.lock from .gitignore so it gets committed
+    - Update Dockerfile to handle missing yarn.lock with wildcard copy
+    - Add yarn.lock to git tracking for proper dependency management
+
+.gitignore
+Dockerfile
+yarn.lock
