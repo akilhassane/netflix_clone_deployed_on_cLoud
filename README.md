@@ -14,6 +14,9 @@
   <p align="center">Home Page</p>
 </div>
 
+The Project was created by N4si, I followed his instructions using this youtube video
+https://www.youtube.com/watch?v=g8X5AoqCJHc&t=150s&ab_channel=CloudChamp
+
 # Deploy Netflix Clone on Cloud using Jenkins - DevSecOps Project!
 
 ### **Phase 1: Initial Setup and Deployment**
