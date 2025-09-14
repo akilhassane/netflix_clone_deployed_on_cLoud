@@ -15,7 +15,9 @@
 </div>
 
 The Project was created by N4si, you can find it here https://github.com/N4si/DevSecOps-Project 
+
 I followed his instructions using this youtube video https://www.youtube.com/watch?v=g8X5AoqCJHc&t=150s&ab_channel=CloudChamp
+
 And updated it along the way to fix some compatibility issues
 
 # Deploy Netflix Clone on Cloud using Jenkins - DevSecOps Project!
