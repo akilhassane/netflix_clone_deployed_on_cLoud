@@ -35,7 +35,7 @@ And updated it along the way to fix some compatibility issues
 - Clone your application's code repository onto the EC2 instance:
     
     ```bash
-    git clone https://github.com/N4si/DevSecOps-Project.git
+    git clone https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git
     ```
     
 
