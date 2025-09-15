@@ -222,7 +222,7 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+                git branch: 'master', url: 'https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git'
             }
         }
         stage("Sonarqube Analysis") {
@@ -242,7 +242,7 @@ pipeline {
         }
         stage('Install Dependencies') {
             steps {
-                sh "npm install"
+                sh "yarn install"
             }
         }
     }
@@ -312,7 +312,7 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+                git branch: 'master', url: 'https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git'
             }
         }
         stage("Sonarqube Analysis "){
@@ -332,7 +332,7 @@ pipeline{
         }
         stage('Install Dependencies') {
             steps {
-                sh "npm install"
+                sh "yarn install"
             }
         }
         stage('OWASP FS SCAN') {
@@ -354,8 +354,8 @@ pipeline{
                        sh "echo '<your-tmdb-api-key>' > tmdb_api_key.txt"
                        // Build with secrets (secure method)
                        sh "DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix ."
-                       sh "docker tag netflix nasi101/netflix:latest "
-                       sh "docker push nasi101/netflix:latest "
+                       sh "docker tag netflix akil/netflix:latest "
+                       sh "docker push akil/netflix:latest "
                        // Clean up secret file
                        sh "rm tmdb_api_key.txt"
                     }
@@ -364,12 +364,12 @@ pipeline{
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image nasi101/netflix:latest > trivyimage.txt" 
+                sh "trivy image akil/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
+                sh 'docker run -d --name netflix -p 8081:80 akil/netflix:latest'
             }
         }
     }
