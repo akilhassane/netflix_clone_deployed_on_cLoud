@@ -15,7 +15,7 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'main', url: 'https://github.com/Aj7Ay/Netflix-clone.git'
+                git branch: 'master', url: 'https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git'
             }
         }
         stage("Sonarqube Analysis "){
@@ -35,7 +35,7 @@ pipeline{
         }
         stage('Install Dependencies') {
             steps {
-                sh "npm install"
+                sh "yarn install"
             }
         }
         stage('OWASP FS SCAN') {
