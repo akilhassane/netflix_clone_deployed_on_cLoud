@@ -5,7 +5,7 @@ pipeline{
         nodejs 'node16'
     }
     environment {
-        SCANNER_HOME=tool 'sonar-scanner'
+        SCANNER_HOME = tool 'sonar-scanner'
     }
     stages {
         stage('clean workspace'){
@@ -52,10 +52,15 @@ pipeline{
         stage("Docker Build & Push"){
             steps{
                 script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh "docker build --build-arg TMDB_V3_API_KEY=<yourtmdbapikey> -t netflix ."
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
+                       // Create API key secret file
+                       sh "echo '<your-tmdb-api-key>' > tmdb_api_key.txt"
+                       // Build with secrets (secure method)
+                       sh "DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix ."
                        sh "docker tag netflix akil/netflix:latest "
                        sh "docker push akil/netflix:latest "
+                       // Clean up secret file
+                       sh "rm tmdb_api_key.txt"
                     }
                 }
             }
@@ -96,3 +101,9 @@ pipeline{
         }
     }
 }
+
+// If you get docker login failed error:
+//
+// sudo su
+// sudo usermod -aG docker jenkins
+// sudo systemctl restart jenkins
