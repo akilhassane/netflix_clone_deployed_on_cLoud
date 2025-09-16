@@ -354,8 +354,8 @@ pipeline{
                        sh "echo '<your-tmdb-api-key>' > tmdb_api_key.txt"
                        // Build with secrets (secure method)
                        sh "DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix ."
-                       sh "docker tag netflix akil/netflix:latest "
-                       sh "docker push akil/netflix:latest "
+                       sh "docker tag netflix akilhassane/netflix:latest "
+                       sh "docker push akilhassane/netflix:latest "
                        // Clean up secret file
                        sh "rm tmdb_api_key.txt"
                     }
@@ -364,12 +364,12 @@ pipeline{
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image akil/netflix:latest > trivyimage.txt" 
+                sh "trivy image akilhassane/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d -p 8081:80 akil/netflix:latest'
+                sh 'docker run -d -p 8081:80 akilhassane/netflix:latest'
             }
         }
     }
