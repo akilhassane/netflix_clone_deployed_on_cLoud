@@ -58,12 +58,15 @@ pipeline{
                        // More debugging: check file content and Docker context
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
-                       // Fix Snap Docker context access by copying to /tmp
-                       sh "sudo mkdir -p /tmp/netflix-build && sudo cp -r \${WORKSPACE}/* /tmp/netflix-build/"
-                       sh "ls -la /tmp/netflix-build/"
-                       sh "ls -la /tmp/netflix-build/Dockerfile"
-                       // Try different Docker approaches
-                       sh "cd /tmp/netflix-build && sudo DOCKER_BUILDKIT=0 docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       // Jenkins-specific Docker build approach
+                       // First, try building directly in workspace with explicit paths
+                       sh """
+                           cd \${WORKSPACE}
+                           sudo docker build --no-cache --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c \\
+                               --file=\${WORKSPACE}/Dockerfile \\
+                               --tag=netflix \\
+                               \${WORKSPACE}
+                       """
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
