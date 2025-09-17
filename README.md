@@ -381,7 +381,7 @@ pipeline{
 
 If you get docker login failed error:
 
-```
+```bash
 sudo su
 sudo groupadd docker
 sudo usermod -a -G docker jenkins
@@ -391,23 +391,23 @@ sudo systemctl restart jenkins
 
 If you get files other than /home need more configuration error:
 
-```
+```bash
 sudo mkdir -p /home/jenkins   # Create target directory if needed
 sudo mount --bind /var/lib/jenkins /home/jenkins
 ```
 
 If it asks for password:
 
-  ```
-  sudo visudo
-  ```
-
-  add this to the visudo file under the sudo members part:
-
-  ```
-  # Members of the admin group may execute without a password
-  jenkins ALL=(ALL) NOPASSWD:ALL
-  ```
+    ```bash
+      sudo visudo
+    ```
+    
+    add this to the visudo file under the sudo members part:
+    
+    ```bash
+      # Members of the admin group may execute without a password
+      jenkins ALL=(ALL) NOPASSWD:ALL
+    ```
 
 **Phase 4: Monitoring**
 
