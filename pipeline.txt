@@ -53,13 +53,6 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Debug: Check current directory and Dockerfile existence
-                       sh "pwd && ls -la && ls -la Dockerfile"
-                       // More debugging: check file content and Docker context
-                       sh "file Dockerfile && head -5 Dockerfile"
-                       sh "sudo docker version && sudo docker buildx version"
-                       // Use Docker tar-based build context (bypasses Snap filesystem issues)
-                       sh "whoami && which docker"
                        // Create tar archive of build context and pipe to Docker
                        sh """
                            tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix -
