@@ -58,11 +58,13 @@ pipeline{
                        // More debugging: check file content and Docker context
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
-                       // Configure environment for Snap Docker
-                       sh "export HOME=/var/lib/jenkins"
-                       sh "sudo /snap/bin/docker --version"
-                       // Build with proper Snap Docker environment
-                       sh "sudo HOME=/var/lib/jenkins /snap/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       // Fix Snap Docker home directory configuration
+                       sh "whoami && which docker"
+                       // Configure Snap Docker environment for Jenkins
+                       sh "sudo snap connect docker:home"
+                       sh "sudo snap connect docker:removable-media"
+                       // Set proper environment for Snap Docker
+                       sh "sudo SNAP_USER_COMMON=/var/lib/jenkins /snap/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
