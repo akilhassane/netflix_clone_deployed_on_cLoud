@@ -58,8 +58,8 @@ pipeline{
                        // More debugging: check file content and Docker context
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
-                       // Try without BuildKit first
-                       sh "sudo DOCKER_BUILDKIT=0 docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -f ./Dockerfile -t netflix ."
+                       // Fix Snap Docker path issue with absolute paths
+                       sh "sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -f \${WORKSPACE}/Dockerfile -t netflix \${WORKSPACE}"
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
