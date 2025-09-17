@@ -58,13 +58,34 @@ pipeline{
                        // More debugging: check file content and Docker context
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
-                       // Fix Snap Docker home directory configuration
-                       sh "whoami && which docker"
-                       // Configure Snap Docker environment for Jenkins
-                       sh "sudo snap connect docker:home"
-                       sh "sudo snap connect docker:removable-media"
-                       // Set proper environment for Snap Docker
-                       sh "sudo SNAP_USER_COMMON=/var/lib/jenkins /snap/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       // Try buildah as alternative to Snap Docker
+                       sh "whoami && which docker && which buildah"
+                       // Install buildah if not available
+                       sh "sudo apt update && sudo apt install -y buildah || echo 'buildah already installed'"
+                       // Build using buildah (more Jenkins-friendly than Snap Docker)
+                       sh """
+                           buildah --version
+                           newcontainer=\$(buildah from node:16.17.0-alpine)
+                           buildah run \$newcontainer -- /bin/sh -c 'mkdir -p /app'
+                           buildah config --workingdir /app \$newcontainer
+                           buildah copy \$newcontainer package.json ./
+                           buildah copy \$newcontainer yarn.lock ./
+                           buildah run \$newcontainer -- yarn install
+                           buildah copy \$newcontainer . .
+                           buildah config --env VITE_APP_TMDB_V3_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c \$newcontainer
+                           buildah config --env VITE_APP_API_ENDPOINT_URL=https://api.themoviedb.org/3 \$newcontainer
+                           buildah run \$newcontainer -- yarn build
+                           
+                           # Production stage
+                           prodcontainer=\$(buildah from nginx:stable-alpine)
+                           buildah config --workingdir /usr/share/nginx/html \$prodcontainer
+                           buildah run \$prodcontainer -- rm -rf ./*
+                           buildah copy \$prodcontainer \$newcontainer:/app/dist .
+                           buildah config --port 80 \$prodcontainer
+                           buildah config --entrypoint '["nginx", "-g", "daemon off;"]' \$prodcontainer
+                           buildah commit \$prodcontainer netflix
+                           buildah rm \$newcontainer \$prodcontainer
+                       """
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
