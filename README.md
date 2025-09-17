@@ -375,15 +375,25 @@ pipeline{
     }
 }
 
+```
 
-If you get docker login failed errorr
+**Run this in your ubuntu/linux**
 
+If you get docker login failed error:
+
+```
 sudo su
 sudo groupadd docker
 sudo usermod -a -G docker jenkins
 sudo systemctl restart jenkins
 
+```
 
+If you get files other than /home need more configuration error:
+
+```
+sudo mkdir -p /home/jenkins   # Create target directory if needed
+sudo mount --bind /var/lib/jenkins /home/jenkins
 ```
 
 **Phase 4: Monitoring**
