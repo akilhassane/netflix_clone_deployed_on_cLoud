@@ -55,8 +55,8 @@ pipeline{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
                        // Debug: Check current directory and Dockerfile existence
                        sh "pwd && ls -la && ls -la Dockerfile"
-                       // Build with API key as build argument
-                       sh "sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       // Try different approaches to fix Docker context issue
+                       sh "sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -f ./Dockerfile -t netflix ."
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
