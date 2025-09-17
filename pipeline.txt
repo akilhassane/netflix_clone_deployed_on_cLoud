@@ -71,7 +71,7 @@ pipeline{
         }
         stage('Deploy to container'){
             steps{
-                sh 'sudo SNAP_USER_COMMON=/var/lib/jenkins docker run -d -p 8081:80 akilhassane/netflix:latest'
+                sh 'sudo docker run -d -p 8081:80 akilhassane/netflix:latest'
             }
         }
         stage('Deploy to kubernets'){
