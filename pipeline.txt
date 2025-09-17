@@ -15,32 +15,32 @@ pipeline{
         }
         stage('Checkout from Git'){
             steps{
-                git branch: 'master', url: 'https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git'
+                git branch: 'main', url: 'https://github.com/akilhassane/netflix_clone_deployed_on_cLoud.git'
             }
         }
         stage("Sonarqube Analysis "){
             steps{
                 withSonarQubeEnv('sonar-server') {
-                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
-                    -Dsonar.projectKey=Netflix '''
+                    sh ''' $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=netflix \
+                    -Dsonar.projectKey=netflix '''
                 }
             }
         }
         stage("quality gate"){
            steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'Sonar-token' 
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
                 }
             } 
         }
         stage('Install Dependencies') {
             steps {
-                sh "yarn install"
+                sh "npm install"
             }
         }
         stage('OWASP FS SCAN') {
             steps {
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-check'
                 dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             }
         }
@@ -53,30 +53,24 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Create API key secret file in workspace
-                       sh "echo '${TMDB_API_KEY}' > \${WORKSPACE}/tmdb_api_key.txt"
-                       // Build with secrets (secure method) - use absolute path
-                       sh "DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=\${WORKSPACE}/tmdb_api_key.txt -t netflix ."
-                       sh "docker tag netflix akil/netflix:latest "
-                       sh "docker push akil/netflix:latest "
-                       // Clean up secret file
-                       sh "rm \${WORKSPACE}/tmdb_api_key.txt"
+                       // Debug: Check current directory and Dockerfile existence
+                       sh "pwd && ls -la && ls -la Dockerfile"
+                       // Build with API key as build argument
+                       sh "sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       sh "sudo docker tag netflix akilhassane/netflix:latest "
+                       sh "sudo docker push akilhassane/netflix:latest "
                     }
                 }
             }
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image akil/netflix:latest > trivyimage.txt" 
+                sh "trivy image akilhassane/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh '''
-                docker stop netflix || true
-                docker rm netflix || true
-                docker run -d -p 8081:80 --name netflix akil/netflix:latest
-                '''
+                sh 'docker run -d -p 8081:80 akilhassane/netflix:latest'
             }
         }
         stage('Deploy to kubernets'){
