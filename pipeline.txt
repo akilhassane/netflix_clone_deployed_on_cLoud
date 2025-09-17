@@ -58,11 +58,11 @@ pipeline{
                        // More debugging: check file content and Docker context
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
-                       // Try Jenkins-native Docker approach (bypass Snap issues)
-                       sh "whoami && which docker"
-                       sh "/usr/bin/docker --version || /snap/bin/docker --version"
-                       // Use absolute path to non-snap Docker if available
-                       sh "sudo /usr/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix . || sudo /snap/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       // Configure environment for Snap Docker
+                       sh "export HOME=/var/lib/jenkins"
+                       sh "sudo /snap/bin/docker --version"
+                       // Build with proper Snap Docker environment
+                       sh "sudo HOME=/var/lib/jenkins /snap/bin/docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
