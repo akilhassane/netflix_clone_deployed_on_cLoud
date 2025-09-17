@@ -59,8 +59,11 @@ pipeline{
                        sh "file Dockerfile && head -5 Dockerfile"
                        sh "sudo docker version && sudo docker buildx version"
                        // Fix Snap Docker context access by copying to /tmp
-                       sh "sudo cp -r \${WORKSPACE}/* /tmp/netflix-build/ || sudo mkdir -p /tmp/netflix-build && sudo cp -r \${WORKSPACE}/* /tmp/netflix-build/"
-                       sh "cd /tmp/netflix-build && sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
+                       sh "sudo mkdir -p /tmp/netflix-build && sudo cp -r \${WORKSPACE}/* /tmp/netflix-build/"
+                       sh "ls -la /tmp/netflix-build/"
+                       sh "ls -la /tmp/netflix-build/Dockerfile"
+                       // Try different Docker approaches
+                       sh "cd /tmp/netflix-build && sudo DOCKER_BUILDKIT=0 docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix ."
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                     }
