@@ -350,14 +350,12 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Create API key secret file
-                       sh "echo '<your-tmdb-api-key>' > tmdb_api_key.txt"
-                       // Build with secrets (secure method)
-                       sh "DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix ."
-                       sh "docker tag netflix akilhassane/netflix:latest "
-                       sh "docker push akilhassane/netflix:latest "
-                       // Clean up secret file
-                       sh "rm tmdb_api_key.txt"
+                       // Create tar archive of build context and pipe to Docker
+                       sh """
+                           tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=<your-tmdb-api-key> -t netflix -
+                       """
+                       sh "sudo docker tag netflix akilhassane/netflix:latest "
+                       sh "sudo docker push akilhassane/netflix:latest "
                     }
                 }
             }
@@ -377,7 +375,7 @@ pipeline{
 
 ```
 
-**Run this in your ubuntu/linux**
+**For Debugging: run this in your ubuntu/linux**
 
 If you get docker login failed error:
 
