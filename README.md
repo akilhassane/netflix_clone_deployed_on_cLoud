@@ -367,7 +367,7 @@ pipeline{
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d -p 8081:80 akilhassane/netflix:latest'
+                sh 'sudo docker run -d -p 8081:80 akilhassane/netflix:latest'
             }
         }
     }
