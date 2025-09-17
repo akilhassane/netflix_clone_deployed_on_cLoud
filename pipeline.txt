@@ -55,10 +55,11 @@ pipeline{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
                        // Create tar archive of build context and pipe to Docker
                        sh """
-                           tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix -
+                           tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=<your-tmdb-api-key> -t netflix -
                        """
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
+                       
                     }
                 }
             }
