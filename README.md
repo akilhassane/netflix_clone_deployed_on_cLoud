@@ -398,16 +398,15 @@ sudo mount --bind /var/lib/jenkins /home/jenkins
 
 If it asks for password:
 
-    ```bash
+      bash
       sudo visudo
-    ```
+      
+  add this to the visudo file under the sudo members part:
     
-    add this to the visudo file under the sudo members part:
-    
-    ```bash
+      bash
       # Members of the admin group may execute without a password
       jenkins ALL=(ALL) NOPASSWD:ALL
-    ```
+      
 
 **Phase 4: Monitoring**
 
