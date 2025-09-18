@@ -570,7 +570,15 @@ If it asks for password:
 
    **Prometheus Configuration:**
 
-   To configure Prometheus to scrape metrics from Node Exporter and Jenkins, you need to modify the `prometheus.yml` file. Here is an example `prometheus.yml` configuration for your setup:
+   To configure Prometheus to scrape metrics from Node Exporter and Jenkins, you need to modify the `prometheus.yml` file.
+
+   Here is an example of the command to navigate to it:
+
+   ```yaml
+   cd /etc/prometheus
+   ```
+
+   Here is an example `prometheus.yml` configuration for your setup:
 
    ```yaml
    global:
