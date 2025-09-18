@@ -574,8 +574,9 @@ If it asks for password:
 
    Here is an example of the command to navigate to it:
 
-   ```yaml
+   ```bash
    cd /etc/prometheus
+   nano prometheus.yml
    ```
 
    Here is an example `prometheus.yml` configuration for your setup:
