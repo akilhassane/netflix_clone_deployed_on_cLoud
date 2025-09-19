@@ -12,13 +12,11 @@ RUN yarn install
 # Copy source code
 COPY . .
 
-# Accept build argument for API key
-ARG TMDB_API_KEY
-ENV VITE_APP_TMDB_V3_API_KEY=${TMDB_API_KEY}
-ENV VITE_APP_API_ENDPOINT_URL="https://api.themoviedb.org/3"
-
-# Build the application
-RUN yarn build
+# Use BuildKit secret for secure API key handling
+RUN --mount=type=secret,id=tmdb_api_key \
+    export VITE_APP_TMDB_V3_API_KEY=$(cat /run/secrets/tmdb_api_key) && \
+    export VITE_APP_API_ENDPOINT_URL="https://api.themoviedb.org/3" && \
+    yarn build
 
 # Production stage
 FROM nginx:stable-alpine
