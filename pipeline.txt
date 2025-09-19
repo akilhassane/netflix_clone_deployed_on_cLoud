@@ -53,13 +53,17 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Use Jenkins credentials for secure API key handling
-                       withCredentials([string(credentialsId: 'tmdb-api-key', variable: 'TMDB_API_KEY')]) {
-                           // Create tar archive of build context and pipe to Docker
-                           sh """
-                               tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=\${TMDB_API_KEY} -t netflix -
-                           """
-                       }
+                       // Create secure secret file for Docker BuildKit
+                       sh """
+                           echo "99eec89d2dc36d0cfdacb8033e3e710c" > tmdb_api_key.txt
+                           chmod 600 tmdb_api_key.txt
+                       """
+                       // Build with Docker BuildKit secrets (secure method)
+                       sh """
+                           tar -czf - . | sudo DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix -
+                       """
+                       // Clean up secret file immediately
+                       sh "rm -f tmdb_api_key.txt"
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                        
