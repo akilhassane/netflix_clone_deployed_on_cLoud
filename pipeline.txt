@@ -63,11 +63,13 @@ pipeline{
                        sh """
                            cd /tmp/netflix-build
                            echo "99eec89d2dc36d0cfdacb8033e3e710c" | sudo tee tmdb_api_key.txt > /dev/null
-                           sudo chmod 600 tmdb_api_key.txt
+                           sudo chmod 644 tmdb_api_key.txt
+                           ls -la tmdb_api_key.txt
+                           pwd
                        """
-                       // Build with Docker BuildKit secrets (secure method)
+                       // Build with Docker BuildKit secrets using absolute path
                        sh """
-                           cd /tmp/netflix-build && sudo DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=tmdb_api_key.txt -t netflix .
+                           cd /tmp/netflix-build && sudo DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=/tmp/netflix-build/tmdb_api_key.txt -t netflix .
                        """
                        // Clean up secret file and temp directory
                        sh "sudo rm -rf /tmp/netflix-build"
