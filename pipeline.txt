@@ -53,26 +53,10 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Copy files to accessible location for BuildKit secrets
+                       // Use tar-based build with secure environment (works with Snap Docker)
                        sh """
-                           sudo mkdir -p /tmp/netflix-build
-                           sudo cp -r * /tmp/netflix-build/ 2>/dev/null || true
-                           sudo cp -r .* /tmp/netflix-build/ 2>/dev/null || true
+                           tar -czf - . | sudo TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c docker build --build-arg TMDB_API_KEY=99eec89d2dc36d0cfdacb8033e3e710c -t netflix -
                        """
-                       // Create secure secret file in build directory
-                       sh """
-                           cd /tmp/netflix-build
-                           echo "99eec89d2dc36d0cfdacb8033e3e710c" | sudo tee tmdb_api_key.txt > /dev/null
-                           sudo chmod 644 tmdb_api_key.txt
-                           ls -la tmdb_api_key.txt
-                           pwd
-                       """
-                       // Build with Docker BuildKit secrets using absolute path
-                       sh """
-                           cd /tmp/netflix-build && sudo DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=/tmp/netflix-build/tmdb_api_key.txt -t netflix .
-                       """
-                       // Clean up secret file and temp directory
-                       sh "sudo rm -rf /tmp/netflix-build"
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
                        
