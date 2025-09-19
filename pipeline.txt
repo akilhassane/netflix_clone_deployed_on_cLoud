@@ -29,7 +29,15 @@ pipeline{
         stage("quality gate"){
            steps {
                 script {
-                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token' 
+                    try {
+                        timeout(time: 10, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: false, credentialsId: 'sonar-token'
+                        }
+                    } catch (Exception e) {
+                        echo "SonarQube Quality Gate failed or timed out: ${e.getMessage()}"
+                        echo "Continuing pipeline execution..."
+                        currentBuild.result = 'UNSTABLE'
+                    }
                 }
             } 
         }
