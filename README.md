@@ -295,6 +295,7 @@ Now, you have installed the Dependency-Check plugin, configured the tool, and ad
 
 ```groovy
 
+
 pipeline{
     agent any
     tools{
@@ -350,9 +351,9 @@ pipeline{
             steps{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){
-                       // Create tar archive of build context and pipe to Docker
+                       // Use --secret with process substitution (works with Snap Docker)
                        sh """
-                           tar -czf - . | sudo docker build --build-arg TMDB_API_KEY=<your-tmdb-api-key> -t netflix -
+                           tar -czf - . | sudo bash -c 'DOCKER_BUILDKIT=1 docker build --secret id=tmdb_api_key,src=<(echo "<your_tmdb_api_key>") -t netflix -'
                        """
                        sh "sudo docker tag netflix akilhassane/netflix:latest "
                        sh "sudo docker push akilhassane/netflix:latest "
@@ -372,6 +373,17 @@ pipeline{
         }
     }
 }
+post {
+     always {
+        emailext attachLog: true,
+            subject: "'${currentBuild.result}'",
+            body: "Project: ${env.JOB_NAME}<br/>" +
+                "Build Number: ${env.BUILD_NUMBER}<br/>" +
+                "URL: ${env.BUILD_URL}<br/>",
+            to: '<your_email>',
+            attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
+        }
+    }
 
 ```
 
