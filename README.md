@@ -756,6 +756,37 @@ That's it! You've successfully installed and set up Grafana to work with Prometh
 
 In this phase, you'll set up a Kubernetes cluster with node groups. This will provide a scalable environment to deploy and manage your applications.
 
+If you need to download the AWS CLI you can use this command to do so:
+
+```bash
+# Update package index
+sudo apt update
+
+# Install required dependencies
+sudo apt install -y curl unzip
+
+# Download AWS CLI v2
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+
+# Unzip the installer
+unzip awscliv2.zip
+
+# Run the installer
+sudo ./aws/install
+
+# Clean up installation files
+rm -rf awscliv2.zip aws/
+
+# Verify installation
+aws --version
+```
+
+if you need to install kubectl you can do it using this command:
+
+```bash
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+```
+
 ## Monitor Kubernetes with Prometheus
 
 Prometheus is a powerful monitoring and alerting toolkit, and you'll use it to monitor your Kubernetes cluster. Additionally, you'll install the node exporter using Helm to collect metrics from your cluster nodes.
@@ -770,13 +801,83 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
     helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
     ```
 
-2. Create a Kubernetes namespace for the Node Exporter:
+    If you need to firstly install helm use this command:
+    ```bash
+    sudo apt-get install curl gpg apt-transport-https --yes
+    curl -fsSL https://packages.buildkite.com/helm-linux/helm-debian/gpgkey | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+    echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+    sudo apt-get update
+    sudo apt-get install helm
+    ```
+
+3. Create a Kubernetes namespace for the Node Exporter:
 
     ```bash
     kubectl create namespace prometheus-node-exporter
     ```
 
-3. Install the Node Exporter using Helm:
+    If you need to firstly configure AWS console do this:
+
+    ```
+    1. Access the AWS Console
+    Log in to the AWS Management Console with your user account.
+    
+    Make sure you have permission to view or create AWS IAM access keys.
+    
+    2. Navigate to IAM User Security Credentials
+    In the AWS Console, go to Services > IAM (Identity and Access Management).
+    
+    Select Users from the sidebar.
+    
+    Click on your username to open the user details.
+    
+    Go to the Security credentials tab.
+    
+    3. Get (or Create) Access Keys
+    If you see an existing pair of Access Key ID and Secret Access Key you can use, note them down securely.
+    
+    If none exist or you want a new set, click Create access key.
+    
+    Download the generated credentials immediately. The Secret Access Key is only visible at creation time.
+    
+    4. Find Your AWS Region
+    In the top-right of the AWS Console, you will see your region (e.g., us-east-1, eu-west-1).
+    
+    Confirm the region where your infrastructure (EKS, EC2, etc.) is deployed.
+    
+    Copy this region string.
+    
+    5. Decide Output Format
+    The AWS CLI supports several output formats:
+    
+    json – (recommended; the default if you just hit enter)
+    
+    text – for plain text output
+    
+    table – for a more readable table view
+    
+    6. Run aws configure on Your Terminal
+    Open a terminal, then execute the command:
+    
+    aws configure
+    
+    Enter each piece of information when prompted:
+    
+    AWS Access Key ID: Enter the value from step 3.
+    
+    AWS Secret Access Key: Enter the value from step 3.
+    
+    Default region name: Enter the value from step 4.
+    
+    Default output format: Choose one, or hit Enter for JSON.
+    
+    Security Note
+    Do not share your Secret Access Key with anyone.
+    
+    Rotate and manage credentials securely, following AWS best practices.
+    ```
+
+5. Install the Node Exporter using Helm:
 
     ```bash
     helm install prometheus-node-exporter prometheus-community/prometheus-node-exporter --namespace prometheus-node-exporter
@@ -804,20 +905,30 @@ To deploy an application with ArgoCD, you can follow these steps, which I'll out
 
 1. **Install ArgoCD:**
 
-   You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://archive.eksworkshop.com/intermediate/290_argocd/install/) documentation.
+   You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://eksworkshop.com/docs/automation/gitops/argocd/access_argocd) documentation.
 
-2. **Set Your GitHub Repository as a Source:**
+   Or executing these commands in your ec2 instance terminal:
+
+   ```bash
+   aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
+   kubectl create namespace argocd
+   kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+   kubectl get pods -n argocd
+   kubectl port-forward svc/argocd-server -n argocd 8080:443
+   ```
+
+3. **Set Your GitHub Repository as a Source:**
 
    After installing ArgoCD, you need to set up your GitHub repository as a source for your application deployment. This typically involves configuring the connection to your repository and defining the source for your ArgoCD application. The specific steps will depend on your setup and requirements.
 
-3. **Create an ArgoCD Application:**
+4. **Create an ArgoCD Application:**
    - `name`: Set the name for your application.
    - `destination`: Define the destination where your application should be deployed.
    - `project`: Specify the project the application belongs to.
    - `source`: Set the source of your application, including the GitHub repository URL, revision, and the path to the application within the repository.
    - `syncPolicy`: Configure the sync policy, including automatic syncing, pruning, and self-healing.
 
-4. **Access your Application**
+5. **Access your Application**
    - To Access the app make sure port 30007 is open in your security group and then open a new tab paste your NodeIP:30007, your app should be running.
 
 **Phase 7: Cleanup**
