@@ -1039,10 +1039,18 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
 
 Add a Job to Scrape Metrics on nodeip:9001/metrics in prometheus.yml:
 
+Navigate to prometheus.yml using this in your EC2 instance you set for monitoring:
+
+```bash
+sudo su
+cd /etc/prometheus/
+nano prometheus.yml
+```
+
 Update your Prometheus configuration (prometheus.yml) to add a new job for scraping metrics from nodeip:9001/metrics. You can do this by adding the following configuration to your prometheus.yml file:
 
 
-```
+```bash
   - job_name: 'netflix'
     metrics_path: '/metrics'
     static_configs:
