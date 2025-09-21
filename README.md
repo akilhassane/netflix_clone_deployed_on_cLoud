@@ -297,6 +297,9 @@ Now, you have installed the Dependency-Check plugin, configured the tool, and ad
 
 
 
+
+
+
 pipeline{
     agent any
     tools{
@@ -382,10 +385,12 @@ pipeline{
                 "URL: ${env.BUILD_URL}<br/>",
             to: 'akilhassane5@gmail.com',
             attachmentsPattern: 'trivyfs.txt,trivyimage.txt'
-        }
+      }
+      cleanup {
+        cleanWs()
+      }
     }
 }
-
 
 ```
 
@@ -419,7 +424,29 @@ If it asks for password:
    ```bash
    # Members of the admin group may execute without a password
    jenkins ALL=(ALL) NOPASSWD:ALL
-   ```    
+   ```
+If You need to remove some files to turn on the nodes (you can chack this by going for: Manage Jenkins -> Nodes -> Name of the Node), you can execute these commands in your ec2 instance:
+
+  ```bash
+  rm -rf /var/lib/jenkins/workspace/*
+  rm -rf /var/lib/jenkins/.npm/*
+  rm -rf /var/lib/jenkins/.cache/*
+  rm -rf /var/lib/jenkins/.sonar/*
+  rm -rf /var/lib/jenkins/tools/*
+  systemctl restart jenkins
+  ```
+
+If SonarQube fails to analize your project, you can restart it by executing this command in your ec2 instance:
+
+  ```bash
+  docker restart sonar
+  ```
+
+If you want to remove unused docker containers whitch are taking too much space (use this only if you want to build the pipeline and jenkins is showing an error or if you realy need to because it will detete all of the images that where stoped but not removed):
+
+  ```bash
+  sudo docker system prune -a -f
+  ```
 
 **Phase 4: Monitoring**
 
@@ -823,8 +850,14 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
     Log in to the AWS Management Console with your user account.
     
     Make sure you have permission to view or create AWS IAM access keys.
+
+    2. Create an IAM user
+
+    Go to: AWS Console → IAM → Users → Create user → User name: <your-username> (e.g. akil) → Next → (optional) Attach permissions now for admin workflows: choose a group or attach an admin policy if organizationally allowed →  Create user.
     
-    2. Navigate to IAM User Security Credentials
+    After user creation: IAM → Users → <your-username> → Security credentials → Create access key → Download .csv (Access key ID and Secret) and store securely; the secret is shown only once.
+    
+    3. Navigate to IAM User Security Credentials
     In the AWS Console, go to Services > IAM (Identity and Access Management).
     
     Select Users from the sidebar.
@@ -833,21 +866,21 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
     
     Go to the Security credentials tab.
     
-    3. Get (or Create) Access Keys
+    4. Get (or Create) Access Keys
     If you see an existing pair of Access Key ID and Secret Access Key you can use, note them down securely.
     
     If none exist or you want a new set, click Create access key.
     
     Download the generated credentials immediately. The Secret Access Key is only visible at creation time.
     
-    4. Find Your AWS Region
+    5. Find Your AWS Region
     In the top-right of the AWS Console, you will see your region (e.g., us-east-1, eu-west-1).
     
     Confirm the region where your infrastructure (EKS, EC2, etc.) is deployed.
     
     Copy this region string.
     
-    5. Decide Output Format
+    6. Decide Output Format
     The AWS CLI supports several output formats:
     
     json – (recommended; the default if you just hit enter)
@@ -856,25 +889,146 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
     
     table – for a more readable table view
     
-    6. Run aws configure on Your Terminal
+    7. Run aws configure on Your Terminal
     Open a terminal, then execute the command:
     
     aws configure
     
     Enter each piece of information when prompted:
     
-    AWS Access Key ID: Enter the value from step 3.
+    AWS Access Key ID: Enter the value from step 4.
     
-    AWS Secret Access Key: Enter the value from step 3.
+    AWS Secret Access Key: Enter the value from step 4.
     
-    Default region name: Enter the value from step 4.
+    Default region name: Enter the value from step 5.
     
-    Default output format: Choose one, or hit Enter for JSON.
+    Default output format: Choose one from step 6, or hit Enter for JSON.
+
+    8. Create the EKS cluster IAM role
+
+    Go to: IAM → Roles → Create role → Trusted entity: AWS service → Use cases: EKS → EKS – Cluster → Next → Attach policy AmazonEKSClusterPolicy → Next → Role name: <your-pick> (e.g. EKSClusterRole) → Create role.
+    
+    9. Create the EKS cluster (Console)
+
+    Go to: EKS → Add cluster → Create → Name: <your-pick> (e.g netflix) → Kubernetes version: leave default latest → Cluster service role: <role-you-created> (e.g. EKSClusterRole) → VPC: select a VPC that has at least two subnets in different AZs → Subnets: choose two or more (prefer private for nodes) → Cluster endpoint access: Public and private (simple start) → Create and wait until Status = Active.
+
+    10. Add a managed node group
+
+    Go to: EKS → Clusters → netflix → Compute tab → Add node group → Name: ng-1 → Node IAM role: EKSNodeRole → AMI family: Amazon Linux 2 → Instance type: t3.medium (example) → Desired size: 2 (min 1, max 3) → Subnets: select private subnets from the same VPC → Create and wait until Active.
+    
+    Managed node groups simplify lifecycle management of worker nodes for the cluster.
+    
+    11. Grant admin access to the IAM user via Access Entries
+    
+    Go to: EKS → Clusters → <your-cluster-name> (e.g. netflix) → Access tab → Create access entry → IAM principal: <your-arn> (e.g. arn:aws:iam::<your-account-id>:user/akil) → Type: Standard → Username: akil → Groups: system:masters → Next → Add access policy → Policy: AmazonEKSClusterAdminPolicy → Access scope: Cluster → Create.
+    
+    Access Entries are the modern, console-managed way to authorize IAM principals for Kubernetes RBAC without editing aws-auth manually.
+
+    12. In your EC2 instance make sure to execute these commands:
+
+    Command 1:
+
+    aws eks associate-access-policy \
+    --cluster-name <your-cluster-name> (e.g. netflix) \
+    --principal-arn <your-arn> (e.g. arn:aws:iam::820242925270:user/akil) \
+    --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+    --access-scope type=cluster \
+    --region <your-region> (e.g. us-east-1)
+
+    Command 2:
+
+    aws eks list-associated-access-policies \
+    --cluster-name <your-cluster-name> (e.g. netflix) \
+    --principal-arn <your-arn> (e.g. arn:aws:iam::820242925270:user/akil) \
+    --region <your-region> (e.g. us-east-1)
+
+    Command 3:
+
+    aws eks update-kubeconfig --region <your-region> (e.g. us-east-1) --name <your-cluster-name> (e.g. netflix) --profile <your-profile-name> (e.g. akil)
+    kubectl get ns
+
+    Note:
+    Your ARN can be found in AWS console dashboard > IAM > Users > Your-User-Name
     
     Security Note
     Do not share your Secret Access Key with anyone.
     
     Rotate and manage credentials securely, following AWS best practices.
+    ```
+
+    make sure to check these requirements for better experience (optional):
+
+    ```
+    1. Check VPC and Subnet
+    Go to: AWS Console > EC2 > Instances
+    
+    Select your instance. In the "Description" tab, find VPC ID and Subnet ID. Note these values.
+    
+    Go to: AWS Console > EKS > Clusters > Select your cluster ("netflix")
+    
+    Look for: "Networking" section (may be under cluster details). Find VPC ID, Subnet IDs—make sure your EC2 and control plane ENIs are in the same VPC.
+    
+    2. Review Route Table
+    Go to: AWS Console > VPC > Subnets
+    
+    Select your EC2's subnet. In its details pane, find Route Table.
+    
+    Click: The Route Table link, and then open the Routes tab.
+    
+    See: At least one route:
+    
+    Destination: <your VPC CIDR> (e.g., 172.31.0.0/16)
+    
+    Target: local
+    
+    If public endpoint:
+    
+    Destination: 0.0.0.0/0
+    
+    Target: <your Internet Gateway ID>
+    
+    3. Security Groups Check
+    Go to: AWS Console > EC2 > Instances > Your EC2 > "Security" tab
+    
+    Click the Security Group. Review Outbound rules.
+    
+    See:
+    
+    Type: HTTPS, Port range: 443, Destination: 0.0.0.0/0 or VPC CIDR
+    
+    Or a rule that allows all outbound traffic
+    
+    Go to: AWS Console > EKS > Clusters > Networking
+    
+    Find: "Cluster security group" or "Endpoint ENI security group." Open it.
+    
+    See:
+    
+    Inbound rule: Type: HTTPS, Port range: 443, Source: EC2 security group, subnet CIDR, or VPC CIDR
+    
+    4. Network ACLs Review
+    Go to: AWS Console > VPC > Subnets > your EC2 subnet > "Network ACL" tab
+    
+    Click the Network ACL.
+    
+    See:
+    
+    Inbound/outbound rules: ALLOW for TCP 443, and Allow for ephemeral ports (1024-65535)
+    
+    No DENY rules that block required comms
+    
+    5. EKS Endpoint Access Settings
+    Go to: AWS Console > EKS > Clusters > Networking
+    
+    Click: "Manage endpoint access" (if shown).
+    
+    See:
+    
+    Is endpoint "Public," "Private," or both?
+    
+    If public, you can add your EC2's public IP (or VPC CIDR) to the allowed list to test.
+    
+    If private, ensure your EC2's subnet is listed. Otherwise, the API won't be reachable.
     ```
 
 5. Install the Node Exporter using Helm:
@@ -889,11 +1043,17 @@ Update your Prometheus configuration (prometheus.yml) to add a new job for scrap
 
 
 ```
-  - job_name: 'Netflix'
+  - job_name: 'netflix'
     metrics_path: '/metrics'
     static_configs:
       - targets: ['node1Ip:9100']
 ```
+
+6. Export ArgoCD
+   execute this command in your EC2 instance:
+   ```bash
+   export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname')
+   ```
 
 Replace 'your-job-name' with a descriptive name for your job. The static_configs section specifies the targets to scrape metrics from, and in this case, it's set to nodeip:9001.
 
@@ -907,15 +1067,40 @@ To deploy an application with ArgoCD, you can follow these steps, which I'll out
 
    You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://eksworkshop.com/docs/automation/gitops/argocd/access_argocd) documentation.
 
-   Or executing these commands in your ec2 instance terminal:
+   Or
+   
+   Go to the EC2 Dashboard in the AWS Console.
+    
+   Select your EC2 instance, then go to the “Security” tab and review the attached security groups.
+    
+   Ensure there is an outbound rule that allows all traffic or at least TCP port 443 (HTTPS) to anywhere (0.0.0.0/0) or to the EKS API server IP.
+
+   Then execute these commands in your ec2 instance terminal:
 
    ```bash
-   aws eks update-kubeconfig --region <your-region> --name <your-cluster-name>
    kubectl create namespace argocd
    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
    kubectl get pods -n argocd
-   kubectl port-forward svc/argocd-server -n argocd 8080:443
    ```
+
+2. **Export your ArgoCD and Sign in:**
+
+   Execute this command to export your ArgoCD:
+   
+   ```bash
+   kubectl patch svc argocd-server -n argocd -p '{"spec":{"type":"LoadBalancer"}}'
+   until kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null | grep -E '.+'; do echo "waiting for LB..."; sleep 5; done
+   export ARGOCD_SERVER="$(kubectl get svc argocd-server -n argocd -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+   echo "$ARGOCD_SERVER"
+   ```
+
+   Execute this command to get your password:
+
+   ```bash
+   export ARGO_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+   echo "ArgoCD Admin Password: $ARGO_PWD"
+   ```
+
 
 3. **Set Your GitHub Repository as a Source:**
 
