@@ -1101,6 +1101,11 @@ To deploy an application with ArgoCD, you can follow these steps, which I'll out
    echo "ArgoCD Admin Password: $ARGO_PWD"
    ```
 
+   If you need to restart ArgoCD:
+   ```bash
+   kubectl -n argocd rollout restart deploy/argocd-server
+   kubectl -n argocd rollout status deploy/argocd-server
+   ```
 
 3. **Set Your GitHub Repository as a Source:**
 
